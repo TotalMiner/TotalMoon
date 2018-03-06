@@ -1,1 +1,2 @@
-# Total Moon\nA Lua scripting API for Total Miner
+# Total Moon
+A Lua scripting API for Total Miner
