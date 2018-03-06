@@ -27,25 +27,50 @@ namespace TotalMoon
             }
 
             _ModPath = Path.Combine(FileSystem.RootPath + path);
-            _ScriptPath = Path.Combine(_ModPath, "Scripts");
-            
-            if (!Directory.Exists(_ScriptPath))
-            {
-                Directory.CreateDirectory(_ScriptPath);
-            }
         }
 
         public void InitializeGame(ITMGame game)
         {
             Game = game;
             Logger.Logged += Logged;
-
-            foreach (string script in Directory.GetFiles(_ScriptPath, "*.lua", SearchOption.AllDirectories))
+            
+            _ScriptPath = Path.Combine(Path.Combine(FileSystem.RootPath, game.World.WorldPath), "Scripts");
+            
+            if (!Directory.Exists(_ScriptPath))
+            {
+                Directory.CreateDirectory(_ScriptPath);
+            }
+            
+            game.AddConsoleCommand((s, tmGame, arg3, arg4, arg5) =>
             {
                 Script _s = new Script();
+                _s.Globals["os"] = new OSAPI(arg5);
+                try
+                {
+                    _s.DoString(s.Substring(3));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e.ToString());
+                    arg5.WriteLine(e.ToString());
+                }
+            }, "lua", "Runs Lua.", "Runs Lua from the console.");
+            
+            game.AddConsoleCommand((s, tmGame, arg3, arg4, arg5) =>
+            {
+                string[] args = s.Split(' ');
+                Script _s = new Script();
                 _s.Globals["os"] = new OSAPI();
-                _s.DoFile(script);
-            }
+                try
+                {
+                    _s.DoFile(Path.Combine(_ScriptPath, args[1]));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e.ToString());
+                    arg5.WriteLine(e.ToString());
+                }
+            }, "dolua", "Runs Lua from a file.", "Runs lua from a file globally.");
         }
 
         private void Logged(LogType type, string msg)
